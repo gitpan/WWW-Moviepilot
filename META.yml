@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               WWW-Moviepilot
-version:            0.01
+version:            0.02
 abstract:           Interface to the moviepilot.de database
 author:
     - Frank Wiegand <frank.wiegand@gmail.com>
