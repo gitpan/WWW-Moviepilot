@@ -17,11 +17,11 @@ WWW::Moviepilot - Interface to the moviepilot.de database
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -38,6 +38,20 @@ our $VERSION = '0.02';
     my @movies = $m->search_movie( 'matrix' );
     foreach my $movie ( @movies ) {
         print $movie->display_title;
+    }
+
+    # cast of a movie
+    my @cast = $m->cast( 'matrix' );
+    foreach my $person ( @cast ) {
+        print $person->last_name;
+        print $person->character;
+    }
+
+    # filmography of a person
+    my @filmography = $m->filmography( 'paul-newman' );
+    foreach my $movie ( @filmography ) {
+        print $movie->display_title;
+        print $movie->character;
     }
 
 I<Please note: This module is still in early development and subject to change.>
@@ -121,7 +135,7 @@ sub movie {
     my $json = JSON::Any->from_json( $res->decoded_content );
 
     my $movie = WWW::Moviepilot::Movie->new({ m => $self });
-    $movie->populate({ data => $json });
+    $movie->populate({ data => { movie => $json } });
     return $movie;
 }
 
@@ -170,7 +184,7 @@ sub search_movie {
     my @result = ();
     foreach my $entry ( @{ $o->{movies} } ) {
         my $movie = WWW::Moviepilot::Movie->new({ m => $self });
-        $movie->populate({ data => $entry });
+        $movie->populate({ data => { movie => $entry } });
         push @result, $movie;
     }
 
@@ -183,7 +197,7 @@ Retrieve a person as L<WWW::Moviepilot::Person> object.
 You should provide the name of the movie (this name is some kind of normalised,
 I'm not sure how exactly):
 
-    my $person = $m->person( 'pauil-newman' );
+    my $person = $m->person( 'paul-newman' );
 
 =cut
 
@@ -215,8 +229,8 @@ Searches for a person and returns a list with results:
     else {
         # each $person is a WWW::Moviepilot::Person object
         foreach my $person ( @person ) {
-            print $person->first_name;        # e.g. Paul
-            print $person->last_name;      # e.g. Newman
+            print $person->first_name; # e.g. Paul
+            print $person->last_name;  # e.g. Newman
         }
     }
 
@@ -265,6 +279,23 @@ sub cast {
     my ($self, $name) = @_;
     my $movie = WWW::Moviepilot::Movie->new({ m => $self });
     return $movie->cast( $name );
+}
+
+=head2 filmography( $name )
+
+Returns the filmography of a person.
+
+    my $m = WWW::Moviepilot->new(...);
+    my @filmography = $m->filmography('paul-newman');
+
+See L<WWW::Moviepilot::Movie>.
+
+=cut
+
+sub filmography {
+    my ($self, $name) = @_;
+    my $person = WWW::Moviepilot::Person->new({ m => $self });
+    return $person->filmography( $name );
 }
 
 =head2 api_key

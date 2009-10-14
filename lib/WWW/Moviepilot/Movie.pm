@@ -31,7 +31,6 @@ WWW::Moviepilot::Movie - Handle moviepilot.de movies
     # *_lists in list context
     print join ' +++ ', $movie->emotions_list # "Spannend +++ Aufregend"
 
-
 =head1 METHODS
 
 =head2 new
@@ -65,6 +64,23 @@ sub populate {
     if ( $self->restful_url ) {
         ($self->{name}) = $self->restful_url =~ m{/([^/]+)$};
     }
+}
+
+=head2 character
+
+If used together with a filmography search, you get the name of the character
+the person plays in the movie.
+
+    my @filmography = $person->filmography;
+    foreach my $movie (@filmography) {
+        printf "%s plays %s\n", $person->last_name, $movie->character;
+    }
+
+=cut
+
+sub character {
+    my $self = shift;
+    return $self->{data}{character};
 }
 
 =head2 name
@@ -139,7 +155,7 @@ sub cast {
 
     my $o = JSON::Any->from_json( $res->decoded_content );
     foreach my $entry ( @{ $o->{movies_people} } ) {
-        my $person = WWW::Moviepilot::Person->new;
+        my $person = WWW::Moviepilot::Person->new({ m => $self->{m} });
         $person->populate({ data => $entry });
         push @{ $self->{cast} }, $person;
     }
@@ -210,7 +226,7 @@ As of 2009-10-13, these fields are supported:
 
 sub fields {
     my $self = shift;
-    return keys %{ $self->{data} };
+    return keys %{ $self->{data}{movie} };
 }
 
 our $AUTOLOAD;
@@ -218,15 +234,15 @@ sub AUTOLOAD {
     my $self = shift;
     my $field = $AUTOLOAD;
     $field =~ s/.*://;
-    if ( !exists $self->{data}{$field} ) {
+    if ( !exists $self->{data}{movie}{$field} ) {
         return;
     }
 
     if ( $field =~ /_list$/ && wantarray ) {
-        return split /,/, $self->{data}{$field};
+        return split /,/, $self->{data}{movie}{$field};
     }
 
-    return $self->{data}{$field};
+    return $self->{data}{movie}{$field};
 }
 
 1;
